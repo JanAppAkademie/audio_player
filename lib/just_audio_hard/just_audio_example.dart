@@ -1,11 +1,10 @@
 import 'package:audio_player/just_audio_hard/seek_bar.dart';
+import 'package:audio_player/model/audio_data.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
-
-import 'package:rxdart/rxdart.dart';
 
 void main() => runApp(const MyApp());
 
@@ -18,43 +17,6 @@ class MyApp extends StatefulWidget {
 
 class MyAppState extends State<MyApp> with WidgetsBindingObserver {
   late AudioPlayer _player;
-  final _playlist = ConcatenatingAudioSource(children: [
-    // Remove this audio source from the Windows and Linux version because it's not supported yet
-    if (kIsWeb ||
-        ![TargetPlatform.windows, TargetPlatform.linux]
-            .contains(defaultTargetPlatform))
-      ClippingAudioSource(
-        start: const Duration(seconds: 60),
-        end: const Duration(seconds: 90),
-        child: AudioSource.uri(Uri.parse(
-            "https://github.com/rafaelreis-hotmart/Audio-Sample-files/raw/master/sample.mp3")),
-        tag: AudioMetadata(
-          album: "Samples",
-          title: "Samples 1",
-          artwork:
-              "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
-        ),
-      ),
-    AudioSource.uri(
-      Uri.parse(
-          'https://github.com/rafaelreis-hotmart/Audio-Sample-files/raw/master/sample2.mp3'),
-      tag: AudioMetadata(
-        album: "Samples",
-        title: "Sample 2",
-        artwork:
-            "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
-      ),
-    ),
-    AudioSource.uri(
-      Uri.parse("https://s3.amazonaws.com/scifri-segments/scifri201711241.mp3"),
-      tag: AudioMetadata(
-        album: "Samples",
-        title: "Sample 3",
-        artwork:
-            "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
-      ),
-    ),
-  ]);
   final _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
   @override
@@ -71,20 +33,16 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
   Future<void> _init() async {
     final session = await AudioSession.instance;
     await session.configure(const AudioSessionConfiguration.speech());
-    // Listen to errors during playback.
     _player.playbackEventStream.listen((event) {},
         onError: (Object e, StackTrace stackTrace) {
-      print('A stream error occurred: $e');
+      debugPrint('A stream error occurred: $e');
     });
     try {
-      // Preloading audio is not currently supported on Linux.
-      await _player.setAudioSource(_playlist,
-          preload: kIsWeb || defaultTargetPlatform != TargetPlatform.linux);
+      await _player.setAudioSource(playlist, preload: kIsWeb);
     } catch (e) {
-      // Catch load errors: 404, invalid url...
-      print("Error loading audio source: $e");
+      debugPrint("Error loading audio source: $e");
     }
-    // Show a snackbar whenever reaching the end of an item in the playlist.
+
     _player.positionDiscontinuityStream.listen((discontinuity) {
       if (discontinuity.reason == PositionDiscontinuityReason.autoAdvance) {
         _showItemFinished(discontinuity.previousEvent.currentIndex);
@@ -102,7 +60,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
     final sequence = _player.sequence;
     if (sequence == null) return;
     final source = sequence[index];
-    final metadata = source.tag as AudioMetadata;
+    final metadata = source.tag as AudioData;
     _scaffoldMessengerKey.currentState?.showSnackBar(SnackBar(
       content: Text('Finished playing ${metadata.title}'),
       duration: const Duration(seconds: 1),
@@ -121,14 +79,6 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
       _player.stop();
     }
   }
-
-  Stream<PositionData> get _positionDataStream =>
-      Rx.combineLatest3<Duration, Duration, Duration?, PositionData>(
-          _player.positionStream,
-          _player.bufferedPositionStream,
-          _player.durationStream,
-          (position, bufferedPosition, duration) => PositionData(
-              position, bufferedPosition, duration ?? Duration.zero));
 
   @override
   Widget build(BuildContext context) {
@@ -149,7 +99,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                     if (state?.sequence.isEmpty ?? true) {
                       return const SizedBox();
                     }
-                    final metadata = state!.currentSource!.tag as AudioMetadata;
+                    final metadata = state!.currentSource!.tag as AudioData;
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
@@ -157,7 +107,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                           child: Padding(
                             padding: const EdgeInsets.all(8.0),
                             child:
-                                Center(child: Image.network(metadata.artwork)),
+                                Center(child: Image.network(metadata.artwork!)),
                           ),
                         ),
                         Text(metadata.album,
@@ -169,21 +119,6 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                 ),
               ),
               ControlButtons(_player),
-              /*StreamBuilder<PositionData>(
-                stream: _positionDataStream,
-                builder: (context, snapshot) {
-                  final positionData = snapshot.data;
-                  return SeekBar(
-                    duration: positionData?.duration ?? Duration.zero,
-                    position: positionData?.position ?? Duration.zero,
-                    bufferedPosition:
-                        positionData?.bufferedPosition ?? Duration.zero,
-                    onChangeEnd: (newPosition) {
-                      _player.seek(newPosition);
-                    },
-                  );
-                },
-              ),*/
               const SizedBox(height: 8.0),
               Row(
                 children: [
@@ -249,7 +184,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                     return ReorderableListView(
                       onReorder: (int oldIndex, int newIndex) {
                         if (oldIndex < newIndex) newIndex--;
-                        _playlist.move(oldIndex, newIndex);
+                        playlist.move(oldIndex, newIndex);
                       },
                       children: [
                         for (var i = 0; i < sequence.length; i++)
@@ -264,7 +199,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                               ),
                             ),
                             onDismissed: (dismissDirection) {
-                              _playlist.removeAt(i);
+                              playlist.removeAt(i);
                             },
                             child: Material(
                               color: i == state!.currentIndex
@@ -294,7 +229,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
 class ControlButtons extends StatelessWidget {
   final AudioPlayer player;
 
-  const ControlButtons(this.player, {Key? key}) : super(key: key);
+  const ControlButtons(this.player, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -388,16 +323,4 @@ class ControlButtons extends StatelessWidget {
       ],
     );
   }
-}
-
-class AudioMetadata {
-  final String album;
-  final String title;
-  final String artwork;
-
-  AudioMetadata({
-    required this.album,
-    required this.title,
-    required this.artwork,
-  });
 }

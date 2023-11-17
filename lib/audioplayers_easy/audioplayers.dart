@@ -1,3 +1,4 @@
+import 'package:audio_player/model/audio_data.dart';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 
@@ -21,16 +22,14 @@ class AudioPlayerScreen extends StatefulWidget {
   const AudioPlayerScreen({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _AudioPlayerScreenState createState() => _AudioPlayerScreenState();
 }
 
 class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
   AudioPlayer audioPlayer = AudioPlayer();
-  List<String> audioList = [
-    'https://github.com/rafaelreis-hotmart/Audio-Sample-files/raw/master/sample.mp3',
-    'https://github.com/rafaelreis-hotmart/Audio-Sample-files/raw/master/sample2.mp3',
-    'https://github.com/rafaelreis-hotmart/Audio-Sample-files/raw/master/sample.wav'
-  ];
+
+  /// Index des Audio, das grade abgespielt wird
   int currentIndex = 0;
   bool isPlaying = false;
 
@@ -41,7 +40,7 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text("currently Playing: ${audioList[currentIndex]}"),
+            Text("currently Playing: ${audioList[currentIndex].title}"),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -53,16 +52,12 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
                         setState(() {
                           currentIndex--;
                         });
-                        await audioPlayer
-                            .play(UrlSource(audioList[currentIndex]));
-                      } else {
-                        setState(() {
-                          currentIndex--;
-                        });
+                        await audioPlayer.play(
+                            UrlSource(audioList[currentIndex].audioSource));
                       }
                     }
                   },
-                  child: Text('Skip Backward'),
+                  child: const Text('Skip Backward'),
                 ),
                 ElevatedButton(
                   onPressed: () async {
@@ -70,7 +65,7 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
                       await audioPlayer.pause();
                     } else {
                       await audioPlayer
-                          .play(UrlSource(audioList[currentIndex]));
+                          .play(UrlSource(audioList[currentIndex].audioSource));
                     }
                     setState(() {
                       isPlaying = !isPlaying;
@@ -87,8 +82,8 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
                         setState(() {
                           currentIndex++;
                         });
-                        await audioPlayer
-                            .play(UrlSource(audioList[currentIndex]));
+                        await audioPlayer.play(
+                            UrlSource(audioList[currentIndex].audioSource));
                       } else {
                         setState(() {
                           currentIndex++;
@@ -96,7 +91,7 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
                       }
                     }
                   },
-                  child: Text('Skip Forward'),
+                  child: const Text('Skip Forward'),
                 ),
               ],
             ),

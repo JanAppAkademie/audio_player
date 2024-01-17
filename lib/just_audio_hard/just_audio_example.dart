@@ -83,6 +83,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      theme: ThemeData.dark(),
       debugShowCheckedModeBanner: false,
       scaffoldMessengerKey: _scaffoldMessengerKey,
       home: Scaffold(
@@ -203,7 +204,7 @@ class MyAppState extends State<MyApp> with WidgetsBindingObserver {
                             },
                             child: Material(
                               color: i == state!.currentIndex
-                                  ? Colors.grey.shade300
+                                  ? Colors.deepPurpleAccent
                                   : null,
                               child: ListTile(
                                 title: Text(sequence[i].tag.title as String),

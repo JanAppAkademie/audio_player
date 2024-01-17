@@ -11,8 +11,9 @@ class AudioPlayerApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: AudioPlayerScreen(),
+    return  MaterialApp(
+      theme: ThemeData.dark(),
+      home: const AudioPlayerScreen(),
       debugShowCheckedModeBanner: false,
     );
   }
@@ -40,7 +41,8 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text("currently Playing: ${audioList[currentIndex].title}"),
+            Center(child: Text("Currently Playing: ${audioList[currentIndex].title}")),
+            const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -48,14 +50,14 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
                   onPressed: () async {
                     if (currentIndex > 0) {
                       await audioPlayer.stop();
-                      if (isPlaying) {
+                    
                         setState(() {
                           currentIndex--;
                         });
                         await audioPlayer.play(
                             UrlSource(audioList[currentIndex].audioSource));
                       }
-                    }
+                    
                   },
                   child: const Text('Skip Backward'),
                 ),
@@ -63,13 +65,14 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> {
                   onPressed: () async {
                     if (isPlaying) {
                       await audioPlayer.pause();
-                    } else {
-                      await audioPlayer
-                          .play(UrlSource(audioList[currentIndex].audioSource));
+                    } 
+                    if(!isPlaying){
+                      await audioPlayer.play(UrlSource(audioList[currentIndex].audioSource));
                     }
                     setState(() {
                       isPlaying = !isPlaying;
                     });
+                  
                   },
                   child: Text(isPlaying ? 'Pause' : 'Play'),
                 ),

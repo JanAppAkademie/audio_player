@@ -45,7 +45,7 @@ final playlist = ConcatenatingAudioSource(children: [
         "https://github.com/rafaelreis-hotmart/Audio-Sample-files/raw/master/sample.mp3"),
     tag: AudioData(
       album: "Samples",
-      title: "Samples 1",
+      title: "Sample 1",
       artwork:
           "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
     ),
@@ -64,9 +64,9 @@ final playlist = ConcatenatingAudioSource(children: [
     Uri.parse("https://s3.amazonaws.com/scifri-segments/scifri201711241.mp3"),
     tag: AudioData(
       album: "Samples",
-      title: "Sample 3",
+      title: "Trollface",
       artwork:
-          "https://media.wnyc.org/i/1400/1400/l/80/1/ScienceFriday_WNYCStudios_1400.jpg",
+          "https://www.getdigital.de/web/img/products/1100x1100/Aufkleber_Trollface.220426.webp",
     ),
   ),
 ]);
